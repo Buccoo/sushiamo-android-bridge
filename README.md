@@ -29,6 +29,29 @@ APK output:
 
 - `app/build/outputs/apk/release/app-release.apk`
 
+## Firma APK (importante)
+
+Per evitare errore Android `App non installata`, l'APK deve essere firmato sempre con la stessa chiave.
+
+### Locale
+
+1. Copia `keystore.properties.example` in `keystore.properties`
+2. Inserisci percorso `.jks` + password + alias
+3. Esegui build release
+
+Se `keystore.properties` manca, il progetto fa fallback a firma debug (installabile, ma non adatta a distribuzione stabile/update a lungo termine).
+
+### GitHub Actions (release firmata stabile)
+
+Aggiungi in `Settings > Secrets and variables > Actions` della repo:
+
+- `ANDROID_KEYSTORE_BASE64` → contenuto base64 del file `.jks`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+
+Con questi secrets, il workflow crea `keystore.properties` al volo e genera release APK firmata correttamente.
+
 ## Configurazione bridge
 
 Imposta endpoint/token nel file:

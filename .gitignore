@@ -7,5 +7,6 @@ app/build/
 *.jks
 *.keystore
 keystore.properties
+release.jks
 captures/
 .DS_Store
