@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">SushiAMO Bridge</string>
+    <string name="bridge_notification_title">SushiAMO Bridge attivo</string>
+    <string name="bridge_notification_text">Coda stampa in ascolto</string>
+</resources>
