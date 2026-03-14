@@ -2,12 +2,14 @@
 
 Android app dedicata per fare da bridge stampa sempre-attivo senza Desktop App.
 
-## Cosa fa (MVP)
+## Cosa fa
 
-- Esegue un foreground service persistente (`BridgeService`)
-- Polling periodico coda job (placeholder pronto per integrazione Supabase)
-- Notifica di stato sempre visibile
-- Avvio/arresto manuale dal pannello principale
+- Login con credenziali reali Supabase (`email/password`) dell'account ristorante
+- Risoluzione automatica del ristorante associato (owner → `user_roles` admin/manager/staff)
+- Foreground service persistente (`BridgeService`) con polling periodico
+- Claim/ack reale della coda stampa tramite RPC (`print_claim_jobs`, `print_complete_job`)
+- Invio ticket verso stampante di rete TCP/RAW (host/porta da route job)
+- Notifica di stato sempre visibile e metriche locali (`claimed/printed/failed`)
 
 ## Requisiti
 
@@ -52,17 +54,18 @@ Aggiungi in `Settings > Secrets and variables > Actions` della repo:
 
 Con questi secrets, il workflow crea `keystore.properties` al volo e genera release APK firmata correttamente.
 
-## Configurazione bridge
+## Configurazione bridge (prima apertura app)
 
-Imposta endpoint/token nel file:
+Compila nella schermata iniziale Android:
 
-- `app/src/main/java/com/sushiamo/bridge/BridgeConfig.kt`
+- `Supabase URL` (es. `https://xxxx.supabase.co`)
+- `Supabase anon key`
+- `Email admin` (o manager/staff con ristorante associato)
+- `Password`
 
-Campi principali:
+Poi premi `Login`: il bridge salva sessione, risolve il ristorante e abilita `Avvia bridge`.
 
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_TOKEN` (non usare in client pubblico; per prod usa token scoped per bridge)
-- `RESTAURANT_ID`
+Nota sicurezza: non usare `service_role` nel client Android.
 
 ## Release GitHub
 
