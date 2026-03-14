@@ -74,7 +74,7 @@ object BridgeApiClient {
             .put("p_agent_id", config.consumerId)
             .put("p_printer_id", JSONObject.NULL)
             .put("p_device_name", config.deviceName)
-            .put("p_app_version", BuildConfig.VERSION_NAME)
+            .put("p_app_version", "android-bridge-${config.consumerId.takeLast(8)}")
             .put("p_is_active", isActive)
             .toString()
 
