@@ -55,13 +55,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun login() {
-        val supabaseUrl = binding.supabaseUrlInput.text?.toString().orEmpty().trim()
-        val anonKey = binding.supabaseAnonInput.text?.toString().orEmpty().trim()
+        val runtime = BridgeStateStore.getRuntimeConfig(this)
         val email = binding.emailInput.text?.toString().orEmpty().trim()
         val password = binding.passwordInput.text?.toString().orEmpty()
 
-        if (supabaseUrl.isBlank() || anonKey.isBlank() || email.isBlank() || password.isBlank()) {
-            binding.errorText.text = "Compila URL Supabase, anon key, email e password."
+        if (runtime.supabaseUrl.isBlank() || runtime.supabaseAnonKey.isBlank()) {
+            binding.errorText.text = "App non provisionata. Contatta supporto SushiAMO."
+            refreshUi()
+            return
+        }
+
+        if (email.isBlank() || password.isBlank()) {
+            binding.errorText.text = "Compila email e password."
             refreshUi()
             return
         }
@@ -70,10 +75,6 @@ class MainActivity : AppCompatActivity() {
         refreshUi()
 
         try {
-            val runtime = BridgeStateStore.getRuntimeConfig(this).copy(
-                supabaseUrl = supabaseUrl,
-                supabaseAnonKey = anonKey,
-            )
             val session = withContext(Dispatchers.IO) {
                 BridgeApiClient.signInWithPassword(runtime, email, password)
             }
@@ -81,7 +82,7 @@ class MainActivity : AppCompatActivity() {
                 BridgeApiClient.resolveRestaurant(runtime, session)
             } ?: throw IllegalStateException("Nessun ristorante associato a questo account")
 
-            BridgeStateStore.saveRuntimeConfig(this, supabaseUrl, anonKey, email)
+            BridgeStateStore.saveEmail(this, email)
             BridgeStateStore.saveSession(this, session)
             BridgeStateStore.saveRestaurant(this, restaurant)
             BridgeStateStore.setLastError(this, null)
@@ -95,9 +96,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hydrateFormFromStore() {
-        val runtime = BridgeStateStore.getRuntimeConfig(this)
-        binding.supabaseUrlInput.setText(runtime.supabaseUrl)
-        binding.supabaseAnonInput.setText(runtime.supabaseAnonKey)
         binding.emailInput.setText(BridgeStateStore.getSavedEmail(this))
     }
 
@@ -107,6 +105,8 @@ class MainActivity : AppCompatActivity() {
         val restaurant = BridgeStateStore.getRestaurant(this)
         val loggedIn = session != null && restaurant != null
         val lastError = BridgeStateStore.getLastError(this)
+        val runtime = BridgeStateStore.getRuntimeConfig(this)
+        val provisioned = runtime.supabaseUrl.isNotBlank() && runtime.supabaseAnonKey.isNotBlank()
 
         binding.statusText.text = if (running) "Stato bridge: attivo" else "Stato bridge: fermo"
         binding.lastRunText.text = "Ultimo ciclo: ${BridgeStateStore.getLastRun(this)}"
@@ -121,16 +121,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (binding.errorText.text.isNullOrBlank()) {
-            binding.errorText.text = if (lastError.isNotBlank()) "Ultimo errore: $lastError" else ""
+            binding.errorText.text = when {
+                !provisioned -> "App non provisionata. Contatta supporto SushiAMO."
+                lastError.isNotBlank() -> "Ultimo errore: $lastError"
+                else -> ""
+            }
         }
 
-        binding.loginButton.isEnabled = !running
+        binding.loginButton.isEnabled = !running && provisioned
         binding.logoutButton.isEnabled = !running && loggedIn
-        binding.startButton.isEnabled = !running && loggedIn
+        binding.startButton.isEnabled = !running && loggedIn && provisioned
         binding.stopButton.isEnabled = running
 
-        binding.supabaseUrlInput.isEnabled = !running
-        binding.supabaseAnonInput.isEnabled = !running
         binding.emailInput.isEnabled = !running
         binding.passwordInput.isEnabled = !running
     }

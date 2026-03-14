@@ -1,3 +1,4 @@
+import org.gradle.api.GradleException
 import java.util.Properties
 
 plugins {
@@ -17,6 +18,20 @@ val hasReleaseKeystore = keystorePropertiesFile.exists() &&
     keystoreProperties.getProperty("keyAlias")?.isNotBlank() == true &&
     keystoreProperties.getProperty("keyPassword")?.isNotBlank() == true
 
+fun readBuildSecret(name: String): String {
+    val fromEnv = System.getenv(name)?.trim().orEmpty()
+    if (fromEnv.isNotBlank()) return fromEnv
+    val fromProp = (findProperty(name) as String?)?.trim().orEmpty()
+    return fromProp
+}
+
+fun escapeBuildConfig(value: String): String =
+    value.replace("\\", "\\\\").replace("\"", "\\\"")
+
+val bridgeSupabaseUrl = readBuildSecret("BRIDGE_SUPABASE_URL")
+val bridgeSupabaseAnonKey = readBuildSecret("BRIDGE_SUPABASE_ANON_KEY")
+val hasBridgeRuntimeSecrets = bridgeSupabaseUrl.isNotBlank() && bridgeSupabaseAnonKey.isNotBlank()
+
 android {
     namespace = "com.sushiamo.bridge"
     compileSdk = 34
@@ -25,10 +40,13 @@ android {
         applicationId = "com.sushiamo.bridge"
         minSdk = 23
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "BRIDGE_SUPABASE_URL", "\"${escapeBuildConfig(bridgeSupabaseUrl)}\"")
+        buildConfigField("String", "BRIDGE_SUPABASE_ANON_KEY", "\"${escapeBuildConfig(bridgeSupabaseAnonKey)}\"")
     }
 
     signingConfigs {
@@ -66,7 +84,18 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         viewBinding = true
+    }
+}
+
+gradle.taskGraph.whenReady {
+    val releaseRequested = allTasks.any { task ->
+        val name = task.name
+        name.contains("Release") && (name.contains("assemble") || name.contains("bundle"))
+    }
+    if (releaseRequested && !hasBridgeRuntimeSecrets) {
+        throw GradleException("Missing BRIDGE_SUPABASE_URL / BRIDGE_SUPABASE_ANON_KEY for release build")
     }
 }
 

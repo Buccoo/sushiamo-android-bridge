@@ -14,8 +14,6 @@ object BridgeStateStore {
     private const val KEY_PRINTED = "printed"
     private const val KEY_FAILED = "failed"
 
-    private const val KEY_SUPABASE_URL = "supabase_url"
-    private const val KEY_SUPABASE_ANON = "supabase_anon"
     private const val KEY_EMAIL = "email"
 
     private const val KEY_ACCESS_TOKEN = "access_token"
@@ -76,10 +74,8 @@ object BridgeStateStore {
             .apply()
     }
 
-    fun saveRuntimeConfig(context: Context, supabaseUrl: String, supabaseAnonKey: String, email: String) {
+    fun saveEmail(context: Context, email: String) {
         prefs(context).edit()
-            .putString(KEY_SUPABASE_URL, supabaseUrl.trim())
-            .putString(KEY_SUPABASE_ANON, supabaseAnonKey.trim())
             .putString(KEY_EMAIL, email.trim())
             .apply()
     }
@@ -98,8 +94,8 @@ object BridgeStateStore {
         }
 
         return BridgeRuntimeConfig(
-            supabaseUrl = prefs(context).getString(KEY_SUPABASE_URL, BridgeConfig.SUPABASE_URL).orEmpty(),
-            supabaseAnonKey = prefs(context).getString(KEY_SUPABASE_ANON, BridgeConfig.SUPABASE_ANON_OR_BRIDGE_TOKEN).orEmpty(),
+            supabaseUrl = BuildConfig.BRIDGE_SUPABASE_URL.trim(),
+            supabaseAnonKey = BuildConfig.BRIDGE_SUPABASE_ANON_KEY.trim(),
             pollIntervalMs = prefs(context).getLong(KEY_POLL_INTERVAL_MS, BridgeConfig.POLL_INTERVAL_MS).coerceAtLeast(1500L),
             claimLimit = prefs(context).getInt(KEY_CLAIM_LIMIT, BridgeConfig.CLAIM_LIMIT).coerceIn(1, 50),
             consumerId = consumerId,

@@ -56,12 +56,19 @@ Con questi secrets, il workflow crea `keystore.properties` al volo e genera rele
 
 ## Configurazione bridge (prima apertura app)
 
-Compila nella schermata iniziale Android:
+Il cliente NON inserisce URL/chiavi Supabase.
 
-- `Supabase URL` (es. `https://xxxx.supabase.co`)
-- `Supabase anon key`
+Nell'app Android il cliente vede solo:
+
 - `Email admin` (o manager/staff con ristorante associato)
 - `Password`
+
+`Supabase URL` e `anon key` vengono iniettati in build release tramite secrets CI.
+
+Secrets richiesti in GitHub Actions:
+
+- `BRIDGE_SUPABASE_URL`
+- `BRIDGE_SUPABASE_ANON_KEY`
 
 Poi premi `Login`: il bridge salva sessione, risolve il ristorante e abilita `Avvia bridge`.
 
